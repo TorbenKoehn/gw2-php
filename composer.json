@@ -1,0 +1,14 @@
+{
+    "name": "torbenkoehn/gw2-php",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GuildWars2\\": ""
+        }
+    }
+}
