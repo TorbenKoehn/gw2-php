@@ -4,14 +4,19 @@ namespace GuildWars2;
 
 use GuildWars2\Api\Entity\Account;
 use GuildWars2\Api\Entity\Character;
+use GuildWars2\Api\Entity\File;
+use GuildWars2\Api\Entity\Item;
 use GuildWars2\Api\Entity\Specialization;
 use GuildWars2\Api\Entity\SpecializationTrait;
 use GuildWars2\Api\EntitySet;
+use Tale\Http\Client;
+use Tale\Http\Method;
 
 class Api
 {
 
     private $_options;
+    private $_client;
     private $_entitySets;
 
     public function __construct(array $options = null)
@@ -20,6 +25,7 @@ class Api
         $this->_options = array_replace_recursive([
             'key' => null,
             'uri' => 'https://api.guildwars2.com/v2',
+            'userAgent' => 'GuildWars2 PHP API Library',
             'language' => 'en',
             'entitySets' => [
                 'characters' => [
@@ -34,12 +40,31 @@ class Api
                 'traits' => [
                     '/traits',
                     SpecializationTrait::class
+                ],
+                'files' => [
+                    '/files',
+                    File::class
+                ],
+                'items' => [
+                    '/items',
+                    Item::class,
+                    false
                 ]
             ],
             'cacheDirectory' => sys_get_temp_dir(),
             'cacheLifeTime' => 3600
         ], $options ? $options : []);
 
+        $headers = [];
+        if ($this->_options['key'])
+            $headers['Authorization'] = "Bearer {$this->_options['key']}";
+
+        $headers['User-Agent'] = $this->_options['userAgent'];
+
+        $this->_client = new Client([
+            'baseUri' => $this->_options['uri'],
+            'headers' => $headers
+        ]);
         $this->_entitySets = [];
 
         foreach ($this->_options['entitySets'] as $name => $args) {
@@ -85,55 +110,29 @@ class Api
     {
 
         $data = $data ? $data : [];
-        $method = $method ? $method : 'GET';
+        $method = $method ? $method : Method::GET;
 
         //Default passed data
         $data['lang'] = $this->_options['lang'];
 
-        //HTTP stream context options
-        $options = [
-            'http' => [
-                'method' => $method
-            ]
-        ];
-
-        if ($this->_options['key']) {
-
-            $options['http']['header'] = "Authorization: Bearer {$this->_options['key']}\r\n";
-        }
-
-        $uri = $this->_options['uri'].$path;
-
-        if ($method === 'POST') {
-
-            $options['http']['content'] = http_build_query($data);
-        } else {
-
-            $uri .= '?'.http_build_query($data);
-        }
-
         //Create a cache-key to be able to cache this request by it's request data
-        $key = sha1($uri.serialize($options));
+        $key = sha1($method.$path.serialize($data).($this->_options['key'] ? $this->_options['key'] : ''));
 
         $cachePath = $this->_options['cacheDirectory'].'/gw2php-'.$key.'.cache';
         if (file_exists($cachePath) && time() - filemtime($cachePath) <= $this->_options['cacheLifeTime'])
             return unserialize(file_get_contents($cachePath));
 
-        $context = stream_context_create($options);
-        $stream = @fopen($uri, 'r', false, $context);
+        $response = $this->_client->request($method, $path, $data);
+        $body = (string)$response->getBody();
 
-        if (!$stream)
-            throw new Api\Exception(
-                "Failed to fetch: ".error_get_last()['message']
-            );
+        $result = @json_decode($body, true);
 
-        $content = stream_get_contents($stream);
-
-        $result = @json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE)
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            echo((string)$response->getBody());
             throw new Api\Exception(
                 "Failed to fetch: Invalid JSON received (".json_last_error_msg().")"
             );
+        }
 
         if (isset($result['error']))
             throw new Api\Exception(
@@ -145,26 +144,21 @@ class Api
                 "Failed to fetch: ".$result['text']
             );
 
-
-        $data = stream_get_meta_data($stream);
-        $headers = [];
-        foreach ($data['wrapper_data'] as $header) {
-
-            if (!strstr($header, ':'))
-                continue;
-
-            list($name, $value) = explode(':', $header, 2);
-            $headers[trim($name)] = trim($value);
-        }
-
         $page = isset($data['page']) ? $data['page'] : 0;
-        $resultCount = isset($headers['X-Result-Count']) ? $headers['X-Result-Count'] : count($result);
-        $totalCount = isset($headers['X-Result-Total']) ? $headers['X-Result-Total'] : $resultCount;
-        $totalPages = isset($headers['X-Page-Total']) ? $headers['X-Page-Total'] : 1;
-        $pageSize = isset($headers['X-Page-Size']) ? $headers['X-Page-Size'] : (
-            isset($data['page_size']) ? $data['page_size'] : $resultCount
-        );
-
+        $resultCount = $response->hasHeader('x-result-count')
+                     ? intval($response->getHeaderLine('x-result-count'))
+                     : count($result);
+        $totalCount = $response->hasHeader('x-result-total')
+                    ? intval($response->getHeader('x-result-total'))
+                    : $resultCount;
+        $totalPages = $response->hasHeader('x-page-total')
+                    ? intval($response->getHeaderLine('x-page-total'))
+                    : 1;
+        $pageSize = $response->hasHeader('x-page-size')
+                  ? intval($response->getHeaderLine('x-page-size'))
+                  :  (
+                      isset($data['page_size']) ? $data['page_size'] : $resultCount
+                  );
 
         $page = new Api\Page(
             $path,

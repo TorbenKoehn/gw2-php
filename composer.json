@@ -4,7 +4,8 @@
     "license": "MIT",
     "minimum-stability": "dev",
     "require": {
-        "php": ">=5.5.0"
+        "php": ">=5.5.0",
+        "talesoft/tale-http": ">=1.2"
     },
     "autoload": {
         "psr-4": {

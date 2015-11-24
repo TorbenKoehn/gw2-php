@@ -9,6 +9,7 @@ abstract class EntityBase
 
     private $_api;
     private $_path;
+    private $_finished;
 
     public function __construct(Api $api, $path, $init = true)
     {
@@ -38,7 +39,7 @@ abstract class EntityBase
     }
 
 
-    public function update(array $values = null)
+    public function update(array $values = null, $finish = false)
     {
 
         foreach ($values as $key => $value) {
@@ -46,7 +47,16 @@ abstract class EntityBase
             $this->set($key, $value);
         }
 
+        if ($finish)
+            $this->_finished = true;
+
         return $this;
+    }
+
+    public function isFinished()
+    {
+
+        return $this->_finished;
     }
 
     public function getChildSet($name, $path, $className, $indexField = null)

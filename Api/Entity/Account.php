@@ -50,7 +50,7 @@ class Account extends EntityBase
     }
 
     /**
-     * @return mixed
+     * @return \DateTimeImmutable
      */
     public function getCreationDate()
     {

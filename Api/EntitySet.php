@@ -31,6 +31,7 @@ class EntitySet implements \IteratorAggregate
         $this->_path = $path;
         $this->_className = $className;
         $this->_supportsAll = $supportsAll;
+        $this->_entities = [];
     }
 
     /**
@@ -84,22 +85,41 @@ class EntitySet implements \IteratorAggregate
         return $this;
     }
 
-    public function load(array $indexes = null, $page = null, $pageSize = null)
+    public function load(array $indexes = null, $page = null, $pageSize = null, $continue = false)
     {
 
-        foreach ($this->fetch($indexes, $page, $pageSize) as $indexValue => $info) {
+        if (!$indexes && $page === null) {
 
-            $className = $this->_className;
-            $indexField = $className::getIndexField();
-
-            if (isset($info[$indexField])) {
-
-                $indexValue = $info[$indexField];
-                unset($info[$indexValue]);
-            }
-
-            $this->update($indexValue, $info);
+            $continue = true;
         }
+
+        //We don't load indexes that we already have!
+        //This only works if we pass explizit indexes
+        if ($indexes && count($indexes) > 0 && $indexes[0] !== 'all') {
+
+            $unfinishedIndexes = array_filter($indexes, function ($index) {
+
+                //Normalize index
+                $index = is_numeric($index) ? intval($index) : $index;
+
+                return !isset($this->_entities[$index]) || !$this->_entities[$index]->isFinished();
+            });
+
+            if (empty($unfinishedIndexes))
+                return $this;
+
+            $indexes = $unfinishedIndexes;
+        }
+
+        $page = $this->fetch($indexes, $page, $pageSize);
+        foreach ($page as $indexValue => $info) {
+
+
+            $this->update($indexValue, $info, true);
+        }
+
+        if ($continue && $page->getNumber() + 1 < $page->getTotal())
+            return $this->load($indexes, $page->getNumber() + 1, $pageSize);
 
         return $this;
     }
@@ -107,18 +127,14 @@ class EntitySet implements \IteratorAggregate
     public function loadOne($index)
     {
 
+        $index = is_numeric($index) ? intval($index) : $index;
+
+        //If its already loaded, don't load it
+        if (isset($this->_entities[$index]) && $this->_entities[$index]->isFinished())
+            return $this;
+
         $info = $this->fetchOne($index)->getData();
-
-        $className = $this->_className;
-        $indexField = $className::getIndexField();
-
-        if (isset($info[$indexField])) {
-
-            $index = $info[$indexField];
-            unset($info[$index]);
-        }
-
-        $this->update($index, $info);
+        $this->update($index, $info, true);
 
         return $this;
     }
@@ -148,19 +164,27 @@ class EntitySet implements \IteratorAggregate
         return $this->_entities[$index];
     }
 
-    protected function update($indexValue, array $values = null)
+    protected function update($indexValue, array $values = null, $finish = false)
     {
+
+        $className = $this->_className;
+        $indexField = $className::getIndexField();
+
+        if (isset($values[$indexField])) {
+
+            $indexValue = $values[$indexField];
+            unset($values[$indexValue]);
+        }
 
         //Normalize index
         $indexValue = is_numeric($indexValue) ? intval($indexValue) : $indexValue;
 
-        $className = $this->_className;
         if (!isset($this->_entities[$indexValue]))
             $this->_entities[$indexValue] = new $className($this, $indexValue);
 
         if ($values) {
 
-            $this->_entities[$indexValue]->update($values);
+            $this->_entities[$indexValue]->update($values, $finish);
         }
 
         return $this;
@@ -175,19 +199,33 @@ class EntitySet implements \IteratorAggregate
     public function fetch(array $indexes = null, $page = null, $pageSize = null)
     {
 
-        $data = ['ids' => implode(
-            ',',
-            $indexes ? $indexes : (
-                $this->_supportsAll
-              ? ['all']
-              : $this->fetchIndexes()->getData()
-            )
-        )];
+        $data = [];
 
-        if ($page)
+        if (!empty($indexes)) {
+
+            $data['ids'] = implode(',', $indexes);
+        } else if ($this->_supportsAll && $page === null) {
+
+            $data['ids'] = 'all';
+        } else if ($page === null) {
+
+            $indexes = $this->fetchIndexes()->getData();
+
+            //We will get everything above 20 indexes in a paged manner.
+            //For that we just omit id and set page to 0
+            if (count($indexes) > 20) {
+
+                $page = 0;
+            } else {
+
+                $data['ids'] = implode(',', $indexes);
+            }
+        }
+
+        if ($page !== null)
             $data['page'] = $page;
 
-        if ($pageSize)
+        if ($pageSize !== null)
             $data['page_size'] = $pageSize;
 
         return $this->_api->fetch($this->_path, $data);
@@ -204,5 +242,11 @@ class EntitySet implements \IteratorAggregate
 
         foreach ($this->get() as $id => $entity)
             yield $id => $entity;
+    }
+
+    public function __get($index)
+    {
+
+        return $this->getOne($index);
     }
 }

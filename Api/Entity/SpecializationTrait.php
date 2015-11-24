@@ -40,9 +40,10 @@ class SpecializationTrait extends SkillBase
 
                 foreach ($value as $skillInfo) {
 
+                    //TODO: This should normally be a "skills" entity set, but it doesn't exist!
                     $skill = new Skill($this->getSet(), $skillInfo['id']);
                     unset($skillInfo['id']);
-                    $skill->update($skillInfo);
+                    $skill->update($skillInfo, true);
                     $this->_skills[] = $skill;
                 }
                 break;
