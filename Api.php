@@ -3,14 +3,15 @@
 namespace GuildWars2;
 
 use GuildWars2\Api\Entity\Account;
+use GuildWars2\Api\Entity\Achievement;
 use GuildWars2\Api\Entity\Character;
+use GuildWars2\Api\Entity\Color;
 use GuildWars2\Api\Entity\File;
 use GuildWars2\Api\Entity\Item;
 use GuildWars2\Api\Entity\Specialization;
 use GuildWars2\Api\Entity\SpecializationTrait;
 use GuildWars2\Api\EntitySet;
-use Tale\Http\Client;
-use Tale\Http\Method;
+use GuzzleHttp\Client;
 
 class Api
 {
@@ -24,7 +25,7 @@ class Api
 
         $this->_options = array_replace_recursive([
             'key' => null,
-            'uri' => 'https://api.guildwars2.com/v2',
+            'uri' => 'https://api.guildwars2.com',
             'userAgent' => 'GuildWars2 PHP API Library',
             'language' => 'en',
             'entitySets' => [
@@ -49,6 +50,15 @@ class Api
                     '/items',
                     Item::class,
                     false
+                ],
+                'achievements' => [
+                    '/achievements',
+                    Achievement::class,
+                    false
+                ],
+                'colors' => [
+                    '/colors',
+                    Color::class
                 ]
             ],
             'cacheDirectory' => sys_get_temp_dir(),
@@ -62,8 +72,9 @@ class Api
         $headers['User-Agent'] = $this->_options['userAgent'];
 
         $this->_client = new Client([
-            'baseUri' => $this->_options['uri'],
-            'headers' => $headers
+            'base_uri' => $this->_options['uri'],
+            'headers' => $headers,
+            'verify' => false
         ]);
         $this->_entitySets = [];
 
@@ -73,6 +84,9 @@ class Api
 
             $this->_entitySets[$name] = new EntitySet($this, $name, $path, $className, $supportsAll);
         }
+
+        @ini_set('max_execution_time', 0);
+        @ini_set('xdebug.max_nesting_level', 10000);
     }
 
     public function getAccount()
@@ -106,11 +120,13 @@ class Api
         return 'https://render.guildwars2.com/file/'.$signature.'/'.$fileId.'.'.$format;
     }
 
-    public function fetch($path, array $data = null, $method = null)
+    public function fetch($path, array $data = null, $method = null, $apiVersion = null)
     {
 
+        $apiVersion = $apiVersion ? $apiVersion : 'v2';
+
         $data = $data ? $data : [];
-        $method = $method ? $method : Method::GET;
+        $method = $method ? $method : 'GET';
 
         //Default passed data
         $data['lang'] = $this->_options['lang'];
@@ -122,7 +138,14 @@ class Api
         if (file_exists($cachePath) && time() - filemtime($cachePath) <= $this->_options['cacheLifeTime'])
             return unserialize(file_get_contents($cachePath));
 
-        $response = $this->_client->request($method, $path, $data);
+        $options = [];
+
+        if ($method === 'GET')
+            $options['query'] = $data;
+        else
+            $options['form_params'] = $data;
+
+        $response = $this->_client->requestAsync($method, "/$apiVersion$path", $options)->wait();
         $body = (string)$response->getBody();
 
         $result = @json_decode($body, true);

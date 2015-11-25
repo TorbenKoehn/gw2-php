@@ -2,7 +2,12 @@
 
 namespace GuildWars2\Api\Entity;
 
+use GuildWars2\Api\Entity\Account\AchievementInfo;
+use GuildWars2\Api\Entity\Account\BankItemInfo;
+use GuildWars2\Api\Entity\Account\DyeInfo;
+use GuildWars2\Api\Entity\Account\MaterialInfo;
 use GuildWars2\Api\EntityBase;
+use GuildWars2\Api\EntitySet;
 
 class Account extends EntityBase
 {
@@ -14,6 +19,11 @@ class Account extends EntityBase
     private $_accessType;
     private $_fractalLevel;
 
+    private $_achievementInfos;
+    private $_bankItemInfos;
+    private $_dyeInfos;
+    private $_materialInfos;
+
     protected function init()
     {
 
@@ -23,6 +33,30 @@ class Account extends EntityBase
         $this->_creationDate = null;
         $this->_accessType = null;
         $this->_fractalLevel = null;
+
+        $this->_achievementInfos = $this->createChildSet(
+            'accountAchievements',
+            '/achievements',
+            AchievementInfo::class
+        );
+
+        $this->_bankItemInfos = $this->createChildSet(
+            'accountBankItems',
+            '/bank',
+            BankItemInfo::class
+        );
+
+        $this->_dyeInfos = $this->createChildSet(
+            'accountDyes',
+            '/dyes',
+            DyeInfo::class
+        );
+
+        $this->_materialInfos = $this->createChildSet(
+            'accountMaterials',
+            '/materials',
+            MaterialInfo::class
+        );
     }
 
     /**
@@ -72,6 +106,102 @@ class Account extends EntityBase
     {
         return $this->_fractalLevel;
     }
+
+    /**
+     * @return EntitySet
+     */
+    public function getAchievementInfos($loadAchievements = false)
+    {
+
+        //Allows to pre-load achievements in one fetch
+        if ($loadAchievements) {
+
+            $ids = array_values(array_map(function($info) {
+
+                if (!$info)
+                    return;
+
+                return $info->getAchievementId();
+            }, iterator_to_array($this->_achievementInfos)));
+
+            $this->getApi()->achievements->load($ids);
+        }
+
+        return $this->_achievementInfos;
+    }
+
+    /**
+     * @return EntitySet
+     */
+    public function getBankItemInfos($loadItems = false)
+    {
+
+        //Allows to pre-load items in one fetch
+        if ($loadItems) {
+
+            $ids = array_values(array_map(function($info) {
+
+                if (!$info)
+                    return;
+
+                return $info->getItemId();
+            }, iterator_to_array($this->_bankItemInfos)));
+
+            $this->getApi()->items->load($ids);
+        }
+
+        return $this->_bankItemInfos;
+    }
+
+    /**
+     * @return EntitySet
+     */
+    public function getDyeInfos($loadColors = false)
+    {
+
+        if (count($this->_dyeInfos->getEntities()) < 1)
+            $this->_dyeInfos->loadIndexes();
+
+        //Allows to pre-load items in one fetch
+        if ($loadColors) {
+
+            $ids = array_values(array_map(function($info) {
+
+                if (!$info)
+                    return;
+
+                return $info->getColorId();
+            }, iterator_to_array($this->_dyeInfos)));
+
+            $this->getApi()->colors->load($ids);
+        }
+
+        return $this->_dyeInfos;
+    }
+
+    /**
+     * @return EntitySet
+     */
+    public function getMaterialInfos($loadItems = false)
+    {
+
+        //Allows to pre-load items in one fetch
+        if ($loadItems) {
+
+            $ids = array_values(array_map(function($info) {
+
+                if (!$info)
+                    return;
+
+                return $info->getItemId();
+            }, iterator_to_array($this->_materialInfos)));
+
+            $this->getApi()->items->load($ids);
+        }
+
+        return $this->_materialInfos;
+    }
+
 
     protected function set($key, $value)
     {

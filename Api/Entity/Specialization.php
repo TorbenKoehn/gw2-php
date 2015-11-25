@@ -22,7 +22,7 @@ class Specialization extends SetEntityBase
         $this->_id = null;
         $this->_name = null;
         $this->_profession = null;
-        $this->_elite = false;
+        $this->_elite = null;
         $this->_minorTraitIds = [];
         $this->_majorTraitIds = [];
         $this->_iconUri = null;

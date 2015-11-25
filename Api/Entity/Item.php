@@ -9,12 +9,14 @@ class Item extends SetEntityBase
 
     private $_id;
     private $_name;
+    private $_iconUri;
 
     protected function init()
     {
 
         $this->_id = null;
         $this->_name = null;
+        $this->_iconUri = null;
     }
 
     /**
@@ -33,6 +35,14 @@ class Item extends SetEntityBase
         return $this->_name;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getIconUri()
+    {
+        return $this->_iconUri;
+    }
+
     protected function set($key, $value)
     {
 
@@ -44,6 +54,10 @@ class Item extends SetEntityBase
             case 'name':
 
                 $this->_name = $value;
+                break;
+            case 'icon':
+
+                $this->_iconUri = $value;
                 break;
         }
     }

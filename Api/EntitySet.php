@@ -111,15 +111,37 @@ class EntitySet implements \IteratorAggregate
             $indexes = $unfinishedIndexes;
         }
 
-        $page = $this->fetch($indexes, $page, $pageSize);
-        foreach ($page as $indexValue => $info) {
+        //We can only pass 200 ids at once
+        if ($indexes && count($indexes) > 200) {
 
+            $len = count($indexes);
+            for ($i = 0; $i < $len; $i += 200) {
+
+                $this->load(array_slice($indexes, $i, 200), $page, $pageSize, $continue);
+            }
+
+            return $this;
+        }
+
+        $page = $this->fetch($indexes, $page, $pageSize);
+        foreach ($page->getData() as $indexValue => $info) {
+
+            if (!is_array($info)) {
+
+                if ($info === null) {
+
+                    //This may indicate a slot, e.g. in inventories
+                    //We check it at least to be able to read it later
+                    $this->_entities[$indexValue] = null;
+                }
+                continue;
+            }
 
             $this->update($indexValue, $info, true);
         }
 
-        if ($continue && $page->getNumber() + 1 < $page->getTotal())
-            return $this->load($indexes, $page->getNumber() + 1, $pageSize);
+        if ($continue && ($page->getNumber() + 1 < $page->getTotal()))
+            return $this->load($indexes, $page->getNumber() + 1, $page->getSize(), true);
 
         return $this;
     }
@@ -139,7 +161,7 @@ class EntitySet implements \IteratorAggregate
         return $this;
     }
 
-    public function getIds()
+    public function getIndexes()
     {
 
         $this->loadIndexes();
@@ -147,10 +169,10 @@ class EntitySet implements \IteratorAggregate
         return array_keys($this->_entities);
     }
 
-    public function get(array $indexes = null)
+    public function get(array $indexes = null, $page = null, $pageSize = null, $continue = false)
     {
 
-        $this->load($indexes);
+        $this->load($indexes, $page, $pageSize, $continue);
 
         return $indexes ? array_intersect_key($this->_entities, array_flip($indexes)) : $this->_entities;
     }
@@ -216,6 +238,9 @@ class EntitySet implements \IteratorAggregate
             if (count($indexes) > 20) {
 
                 $page = 0;
+                //It might also be wise to have a larger page size
+                //Notice that 200 seems to be the max page size given by arena.net
+                $pageSize = 200;
             } else {
 
                 $data['ids'] = implode(',', $indexes);

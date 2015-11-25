@@ -59,7 +59,7 @@ abstract class EntityBase
         return $this->_finished;
     }
 
-    public function getChildSet($name, $path, $className, $indexField = null)
+    public function createChildSet($name, $path, $className, $indexField = null)
     {
 
         return new EntitySet(

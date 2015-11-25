@@ -3,6 +3,9 @@
 use GuildWars2\Api\Entity\Item;
 
 include 'init.php';
+ini_set('max_execution_time', 0);
+ini_set('xdebug.max_nesting_level', 100000);
+
 ?>
 <!DOCTYPE HTML>
 <html lang="<?=$lang?>">
@@ -27,7 +30,7 @@ include 'init.php';
 </head>
 <body>
 
-    <?php /** @var Item $item */ foreach ($api->items as $item): ?>
+    <?php foreach ($api->items as $item): ?>
 
         <div class="item">
             <h1><?=$item->getName()?></h1>
