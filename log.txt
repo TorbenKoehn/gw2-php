@@ -14294,3 +14294,35 @@ User-Agent: GuildWars2 PHP API Library
 < Date: Wed, 25 Nov 2015 17:52:44 GMT
 < 
 * Connection #0 to host api.guildwars2.com left intact
+* Hostname in DNS cache was stale, zapped
+*   Trying 64.25.47.16...
+* Connected to api.guildwars2.com (64.25.47.16) port 443 (#0)
+* Cipher selection: ALL:!EXPORT:!EXPORT40:!EXPORT56:!aNULL:!LOW:!RC4:@STRENGTH
+* SSL connection using TLSv1.2 / AES128-SHA256
+* Server certificate:
+* 	 subject: C=US; ST=Washington; L=Bellevue; O=ArenaNet; CN=*.guildwars2.com
+* 	 start date: 2014-04-11 23:51:50 GMT
+* 	 expire date: 2017-04-11 23:51:50 GMT
+* 	 issuer: C=US; ST=Arizona; L=Scottsdale; O=GoDaddy.com, Inc.; OU=http://certs.godaddy.com/repository/; CN=Go Daddy Secure Certificate Authority - G2
+* 	 SSL certificate verify result: unable to get local issuer certificate (20), continuing anyway.
+> GET /v2/items?ids=75284%2C75284%2C%2C%2C76453%2C%2C21157%2C%2C%2C21160%2C39136%2C%2C%2C67207%2C67826%2C19986%2C19986%2C20325%2C23034%2C23022%2C42967%2C41291%2C43353%2C73834%2C43485%2C50025%2C%2C66943%2C43998%2C20316%2C%2C%2C%2C%2C%2C%2C20002%2C43319%2C36107%2C43418%2C66961%2C8900%2C68046%2C20318%2C43351%2C67836%2C45003%2C20001%2C19997%2C20015%2C67280%2C20017%2C20018%2C20000%2C19984%2C20003%2C20006%2C20008%2C20013%2C20016%2C39600%2C37086%2C19700%2C75223%2C75039%2C75036%2C19663%2C67195%2C73388%2C67193%2C19722%2C19748%2C19729%2C46735%2C76918%2C20796%2C20799%2C19983%2C24884%2C43925%2C46709%2C70537%2C49424%2C49431%2C46735%2C46733%2C46731%2C46731%2C46731%2C46731&lang=de HTTP/1.1
+Host: api.guildwars2.com
+Authorization: Bearer BA41D464-FC04-5440-AE69-368E205894C172191723-3EF5-420B-B276-415358D4AB02
+User-Agent: GuildWars2 PHP API Library
+
+< HTTP/1.1 206 Partial Content
+< Cache-Control: "public, max-age=300"
+< Warning: 299 api.guildwars2.com "Unknown id " "Wed, 25 Nov 2015 18:01:40 +0000"
+< Content-Length: 36981
+< Content-Type: application/json; charset=utf-8
+< Content-Language: de
+< Expires: Wed, 25 Nov 2015 18:06:40 +0000
+< Server: Microsoft-IIS/7.5
+< X-Result-Total: 50838
+< X-Result-Count: 70
+< Access-Control-Expose-Headers: "X-Result-Total, X-Result-Count, Warning"
+< Access-Control-Allow-Origin: *
+< X-Content-Type-Options: nosniff
+< Date: Wed, 25 Nov 2015 18:01:40 GMT
+< 
+* Connection #0 to host api.guildwars2.com left intact
