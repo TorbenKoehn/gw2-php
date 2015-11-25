@@ -9,7 +9,7 @@ abstract class SetEntityBase extends EntityBase
 
     public function __construct(EntitySet $set, $indexValue)
     {
-        parent::__construct($set->getApi(), $set->getPath().'/'.urlencode($indexValue), false);
+        parent::__construct($set->getApi(), $set->getPath().'/'.rawurlencode($indexValue), false);
 
         $this->_set = $set;
 

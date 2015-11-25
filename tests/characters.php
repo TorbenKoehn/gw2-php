@@ -7,6 +7,7 @@ include 'init.php';
 <!DOCTYPE HTML>
 <html lang="<?=$lang?>">
 <head>
+    <meta charset="utf-8">
     <title>Account</title>
     <link rel="stylesheet" href="<?=$api->getFontUri()?>">
     <link rel="stylesheet" href="<?=$api->getItalicFontUri()?>">
@@ -27,7 +28,7 @@ include 'init.php';
 </head>
 <body>
 
-<?php /** @var Character $char */ foreach ($api->characters as $char): ?>
+<?php /** @var Character $char */ foreach ($api->characters->get(['Êlf', 'Kroxx Graubart', 'Elenâth']) as $char): ?>
 
     <div class="char">
         <h1><?=$char->getName()?></h1>

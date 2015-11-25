@@ -18,7 +18,7 @@ class EntitySet implements \IteratorAggregate
      */
     private $_entities;
 
-    public function __construct(Api $api, $name, $path, $className, $supportsAll = true)
+    public function __construct(Api $api, $name, $path, $className, $supportsAll = null)
     {
 
         if (!is_subclass_of($className, SetEntityBase::class))
@@ -30,7 +30,7 @@ class EntitySet implements \IteratorAggregate
         $this->_name = $name;
         $this->_path = $path;
         $this->_className = $className;
-        $this->_supportsAll = $supportsAll;
+        $this->_supportsAll = $supportsAll === null ? true : boolval($supportsAll);
         $this->_entities = [];
     }
 
@@ -243,6 +243,9 @@ class EntitySet implements \IteratorAggregate
                 $pageSize = 200;
             } else {
 
+                //Sometimes there are index-pages that don't give an array of IDs,
+                //but rather just an array
+
                 $data['ids'] = implode(',', $indexes);
             }
         }
@@ -259,7 +262,7 @@ class EntitySet implements \IteratorAggregate
     public function fetchOne($index)
     {
 
-        return $this->_api->fetch($this->_path.'/'.urlencode($index));
+        return $this->_api->fetch($this->_path.'/'.rawurlencode($index));
     }
 
     public function getIterator()

@@ -22,7 +22,7 @@ use GuildWars2\Api\Entity\SpecializationTrait\Fact\Unblockable;
 use GuildWars2\Api\Exception;
 use GuildWars2\Api\SetEntityBase;
 
-class SkillBase extends SetEntityBase
+abstract class SkillBase extends SetEntityBase
 {
 
     private $_id;

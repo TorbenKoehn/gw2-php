@@ -4,7 +4,7 @@ namespace GuildWars2\Api\Entity;
 
 use GuildWars2\Api\SetEntityBase;
 
-class ItemInfoBase extends SetEntityBase
+abstract class ItemInfoBase extends SetEntityBase
 {
     private $_itemId;
     private $_amount;

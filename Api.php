@@ -6,12 +6,19 @@ use GuildWars2\Api\Entity\Account;
 use GuildWars2\Api\Entity\Achievement;
 use GuildWars2\Api\Entity\Character;
 use GuildWars2\Api\Entity\Color;
+use GuildWars2\Api\Entity\Currency;
 use GuildWars2\Api\Entity\File;
+use GuildWars2\Api\Entity\Guild;
 use GuildWars2\Api\Entity\Item;
+use GuildWars2\Api\Entity\Mini;
+use GuildWars2\Api\Entity\Skin;
 use GuildWars2\Api\Entity\Specialization;
 use GuildWars2\Api\Entity\SpecializationTrait;
+use GuildWars2\Api\Entity\TokenInfo;
+use GuildWars2\Api\Entity\World;
 use GuildWars2\Api\EntitySet;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Request;
 
 class Api
 {
@@ -59,10 +66,27 @@ class Api
                 'colors' => [
                     '/colors',
                     Color::class
+                ],
+                'minis' => [
+                    '/minis',
+                    Mini::class
+                ],
+                'skins' => [
+                    '/skins',
+                    Skin::class
+                ],
+                'currencies' => [
+                    '/currencies',
+                    Currency::class
+                ],
+                'worlds' => [
+                    '/worlds',
+                    World::class
                 ]
             ],
             'cacheDirectory' => sys_get_temp_dir(),
-            'cacheLifeTime' => 3600
+            'cacheLifeTime' => 3600,
+            'debug' => fopen(__DIR__.'/log.txt', 'a+')
         ], $options ? $options : []);
 
         $headers = [];
@@ -74,21 +98,33 @@ class Api
         $this->_client = new Client([
             'base_uri' => $this->_options['uri'],
             'headers' => $headers,
-            'verify' => false
+            'verify' => false,
+            'debug' => $this->_options['debug']
         ]);
         $this->_entitySets = [];
 
         foreach ($this->_options['entitySets'] as $name => $args) {
 
-            list($path, $className, $supportsAll) = array_pad($args, 3, true);
+            list($path, $className, $supportsAll) = array_pad($args, 3, null);
 
             $this->_entitySets[$name] = new EntitySet($this, $name, $path, $className, $supportsAll);
         }
 
         @ini_set('max_execution_time', 0);
         @ini_set('xdebug.max_nesting_level', 10000);
+
+        if (function_exists('mb_internal_encoding')) {
+
+            mb_http_output('UTF-8');
+            mb_internal_encoding('UTF-8');
+            ob_start('mb_output_handler');
+        }
     }
 
+    /**
+     * @return Account
+     * @throws Api\Exception
+     */
     public function getAccount()
     {
 
@@ -98,6 +134,37 @@ class Api
         $acc->update($accInfo->getData());
 
         return $acc;
+    }
+
+    /**
+     * @return TokenInfo
+     * @throws Api\Exception
+     */
+    public function getTokenInfo()
+    {
+
+        $tokenInfo = $this->fetchTokenInfo();
+
+        $token = new TokenInfo($this, $tokenInfo->getPath());
+        $token->update($tokenInfo->getData());
+
+        return $token;
+    }
+
+    /**
+     * @param $guildId
+     *
+     * @return Guild
+     */
+    public function getGuild($guildId)
+    {
+
+        $guildInfo = $this->fetchGuild($guildId);
+
+        $guild = new Guild($this, '/guild_details.json?guild_id='.$guildId);
+        $guild->update($guildInfo->getData());
+
+        return $guild;
     }
 
     public function getFontUri()
@@ -140,12 +207,21 @@ class Api
 
         $options = [];
 
+        array_walk($data, function(&$value) {
+
+            if (function_exists('mb_convert_encoding') && function_exists('mb_detect_encoding')) {
+
+                $value = mb_convert_encoding($value, mb_detect_encoding($value), 'UTF-8');
+            }
+        });
+
         if ($method === 'GET')
-            $options['query'] = $data;
+            $options['query'] = http_build_query($data, null, '&', \PHP_QUERY_RFC1738);
         else
             $options['form_params'] = $data;
 
-        $response = $this->_client->requestAsync($method, "/$apiVersion$path", $options)->wait();
+        $request = new Request($method, "/$apiVersion$path");
+        $response = $this->_client->sendAsync($request, $options)->wait();
         $body = (string)$response->getBody();
 
         $result = @json_decode($body, true);
@@ -207,6 +283,23 @@ class Api
             );
 
         return $this->fetch('/account');
+    }
+
+    public function fetchTokenInfo()
+    {
+
+        if (!isset($this->_options['key']))
+            throw new Api\Exception(
+                "You need to set the \"key\" option to enter token info"
+            );
+
+        return $this->fetch('/tokeninfo');
+    }
+
+    public function fetchGuild($guildId)
+    {
+
+        return $this->fetch('/guild_details.json', ['guild_id' => $guildId], null, 'v1');
     }
 
     /**
