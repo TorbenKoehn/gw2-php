@@ -5,12 +5,28 @@ namespace GuildWars2\Api\Entity;
 use GuildWars2\Api\Entity\Guild\EmblemInfo;
 use GuildWars2\Api\EntityBase;
 
+/**
+ * Class Guild
+ *
+ * Notice that guilds fall back to /v1 currently!
+ * This happens in Api->getGuild.
+ *
+ * Upon seeing v2, it will be a real EntitySet (Which is just
+ * replacing EntityBase with SetEntityBase and adding a new set
+ * to the Api constructor)
+ *
+ * @package GuildWars2\Api\Entity
+ */
 class Guild extends EntityBase
 {
 
     private $_id;
     private $_name;
     private $_tag;
+
+    /**
+     * @var EmblemInfo
+     */
     private $_emblemInfo;
 
     protected function init()
@@ -54,6 +70,18 @@ class Guild extends EntityBase
         return $this->_emblemInfo;
     }
 
+    public function getEmblemImage(array $backgroundColor = null)
+    {
+
+        return $this->_emblemInfo->getImage();
+    }
+
+    public function getEmblemDataUri()
+    {
+
+        return $this->_emblemInfo->getDataUri();
+    }
+
     protected function set($key, $value)
     {
 
@@ -73,7 +101,7 @@ class Guild extends EntityBase
             case 'emblem':
 
                 $this->_emblemInfo = new EmblemInfo(
-                    $this,
+                    $this->getApi(),
                     $value['background_id'],
                     $value['foreground_id'],
                     $value['flags'],

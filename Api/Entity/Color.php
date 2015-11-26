@@ -60,6 +60,24 @@ class Color extends SetEntityBase
         return $this->_rgbValue;
     }
 
+    public function getClothRgbValue()
+    {
+
+        return $this->getRgbValue('cloth');
+    }
+
+    public function getLeatherRgbValue()
+    {
+
+        return $this->getRgbValue('leather');
+    }
+
+    public function getMetalRgbValue()
+    {
+
+        return $this->getRgbValue('metal');
+    }
+
     /**
      * @return mixed
      */

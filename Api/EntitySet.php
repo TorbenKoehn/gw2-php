@@ -12,13 +12,14 @@ class EntitySet implements \IteratorAggregate
     private $_path;
     private $_className;
     private $_supportsAll;
+    private $_supportsOne;
 
     /**
      * @var SetEntityBase[]
      */
     private $_entities;
 
-    public function __construct(Api $api, $name, $path, $className, $supportsAll = null)
+    public function __construct(Api $api, $name, $path, $className, $supportsAll = null, $supportsOne = null)
     {
 
         if (!is_subclass_of($className, SetEntityBase::class))
@@ -31,6 +32,7 @@ class EntitySet implements \IteratorAggregate
         $this->_path = $path;
         $this->_className = $className;
         $this->_supportsAll = $supportsAll === null ? true : boolval($supportsAll);
+        $this->_supportsOne = $supportsOne === null ? true : boolval($supportsOne);
         $this->_entities = [];
     }
 
@@ -261,6 +263,22 @@ class EntitySet implements \IteratorAggregate
 
     public function fetchOne($index)
     {
+
+        if (!$this->_supportsOne) {
+
+            //Some APIs don't support /xxxx/<id> requests, so we 'fake' it
+            $result = $this->fetch([$index]);
+
+            return new Page(
+                $result->getData(),
+                $result->getNumber(),
+                $result->getTotal(),
+                $result->getSize(),
+                $result->getCount(),
+                $result->getTotalCount(),
+                $result->getData()[0]
+            );
+        }
 
         return $this->_api->fetch($this->_path.'/'.rawurlencode($index));
     }

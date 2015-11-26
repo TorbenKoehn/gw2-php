@@ -47,6 +47,12 @@ class RgbValue
         return $this->_blue;
     }
 
+    public function getArray()
+    {
+
+        return [$this->_red, $this->_green, $this->_blue];
+    }
+
     public function __toString()
     {
 

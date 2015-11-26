@@ -89,6 +89,15 @@ class Character extends SetEntityBase
         return $this->_guildId;
     }
 
+    public function getGuild()
+    {
+
+        if ($this->_guildId === null)
+            return null;
+
+        return $this->getApi()->getGuild($this->_guildId);
+    }
+
     /**
      * @return mixed
      */
@@ -198,7 +207,7 @@ class Character extends SetEntityBase
                 break;
             case 'guild':
 
-                $this->_guildId = intval($value);
+                $this->_guildId = $value;
                 break;
             case 'age':
 

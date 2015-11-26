@@ -17,13 +17,16 @@ include 'init.php';
 <!DOCTYPE HTML>
 <html lang="<?=$lang?>">
 <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Account</title>
     <link rel="stylesheet" href="<?=$api->getFontUri()?>">
     <link rel="stylesheet" href="<?=$api->getItalicFontUri()?>">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">
     <style>
 
-        html {
+        html, body {
             font-family: 'Menomonia', Arial, sans-serif;
             font-size: 14px;
         }
@@ -170,7 +173,8 @@ include 'init.php';
                         <?php $char = $api->characters->getEntities()[$name]; ?>
                         <?php if (!$char->isFinished()) continue; ?>
                         <tr>
-                            <td><?=$name?></td>
+                            <?php $guild = $char->getGuild()?>
+                            <td><?=$guild ? '['.$guild->getTag().']' : ''?> <?=$name?></td>
                             <td><?=$char->getLevel()?></td>
                             <td><?=implode(' ', [$char->getGender(), $char->getRace(), $char->getProfession()])?></td>
                         </tr>

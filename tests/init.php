@@ -11,5 +11,3 @@ $api = new GuildWars2\Api([
     'cacheLifeTime' => 3600
 ]);
 
-header('Content-Type: text/html; encoding=utf-8');
-

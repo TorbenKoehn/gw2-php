@@ -7,6 +7,8 @@ use GuildWars2\Api\Entity\Achievement;
 use GuildWars2\Api\Entity\Character;
 use GuildWars2\Api\Entity\Color;
 use GuildWars2\Api\Entity\Currency;
+use GuildWars2\Api\Entity\Emblem\Background;
+use GuildWars2\Api\Entity\Emblem\Foreground;
 use GuildWars2\Api\Entity\File;
 use GuildWars2\Api\Entity\Guild;
 use GuildWars2\Api\Entity\Item;
@@ -19,6 +21,7 @@ use GuildWars2\Api\Entity\World;
 use GuildWars2\Api\EntitySet;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Stream;
 
 class Api
 {
@@ -82,6 +85,18 @@ class Api
                 'worlds' => [
                     '/worlds',
                     World::class
+                ],
+                'emblemForegrounds' => [
+                    '/emblem/foregrounds',
+                    Foreground::class,
+                    true,
+                    false
+                ],
+                'emblemBackgrounds' => [
+                    '/emblem/backgrounds',
+                    Background::class,
+                    true,
+                    false
                 ]
             ],
             'cacheDirectory' => sys_get_temp_dir(),
@@ -105,9 +120,9 @@ class Api
 
         foreach ($this->_options['entitySets'] as $name => $args) {
 
-            list($path, $className, $supportsAll) = array_pad($args, 3, null);
+            list($path, $className, $supportsAll, $supportsOne) = array_pad($args, 4, null);
 
-            $this->_entitySets[$name] = new EntitySet($this, $name, $path, $className, $supportsAll);
+            $this->_entitySets[$name] = new EntitySet($this, $name, $path, $className, $supportsAll, $supportsOne);
         }
 
         @ini_set('max_execution_time', 0);
@@ -272,6 +287,27 @@ class Api
         file_put_contents($cachePath, serialize($page));
 
         return $page;
+    }
+
+    public function download($uri, $bodyAsString = false)
+    {
+        $key = 'gw2php-'.sha1($uri).'-dl.cache';
+        $path = $this->_options['cacheDirectory'].'/'.$key;
+
+        if (!file_exists($path) || time() - filemtime($path) > $this->_options['cacheLifeTime']) {
+
+            $client = new Client;
+            $fp = fopen($path, 'w+');
+            $response = $client->getAsync($uri, [
+                'verify' => false,
+                'save_to' => $fp
+            ])->wait();
+            $body = $response->getBody();
+
+            fclose($fp);
+        }
+
+        return $bodyAsString ? file_get_contents($path) : fopen($path, 'r');
     }
 
     public function fetchAccount()

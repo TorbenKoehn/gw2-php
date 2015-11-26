@@ -1,0 +1,3 @@
+RewriteEngine On
+
+RewriteRule emblem\.png$ emblem-editor.php?render [QSA,L]
