@@ -40,10 +40,10 @@ include 'init.php';
     <div class="container">
 
         <div class="well well-sm">
-            <strong>Token:</strong>
-            <span>Key: <em><?=$token->getKey()?></em></span>
-            <span>Name: <em><?=$token->getName()?></em></span>
-            <span>Permissions: <em><?=implode(', ', $token->getPermissions())?></em></span>
+            <span>Key: <em><?=$token->getKey()?></em></span><br>
+            <span>Key Name: <em><?=$token->getName()?></em></span><br>
+            <span>Permissions: <em><?=implode(', ', $token->getPermissions())?></em></span><br>
+            <span>Build ID: <em><?=$api->getBuildId()?></em></span>
         </div>
 
         <div class="row">

@@ -6,6 +6,7 @@ use GuildWars2\Api\Entity\Account;
 use GuildWars2\Api\Entity\Achievement;
 use GuildWars2\Api\Entity\Character;
 use GuildWars2\Api\Entity\Color;
+use GuildWars2\Api\Entity\Continent;
 use GuildWars2\Api\Entity\Currency;
 use GuildWars2\Api\Entity\Emblem\Background;
 use GuildWars2\Api\Entity\Emblem\Foreground;
@@ -97,6 +98,10 @@ class Api
                     Background::class,
                     true,
                     false
+                ],
+                'continents' => [
+                    '/continents',
+                    Continent::class
                 ]
             ],
             'cacheDirectory' => sys_get_temp_dir(),
@@ -180,6 +185,14 @@ class Api
         $guild->update($guildInfo->getData());
 
         return $guild;
+    }
+
+    public function getBuildId()
+    {
+
+        $info = $this->fetchBuildId();
+
+        return $info->getData()['id'];
     }
 
     public function getFontUri()
@@ -336,6 +349,12 @@ class Api
     {
 
         return $this->fetch('/guild_details.json', ['guild_id' => $guildId], null, 'v1');
+    }
+
+    public function fetchBuildId()
+    {
+
+        return $this->fetch('/build');
     }
 
     /**

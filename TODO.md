@@ -19,10 +19,6 @@ Completely. Really.
 
 Completely.
 
-# Emblem
-
-Will rather wait for Guilds right now
-
 # Guilds
 
 Are only available in v1 right now. We get them from v1. Waiting for v2.
